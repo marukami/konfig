@@ -23,6 +23,8 @@ kotlin-poet = { module = "com.squareup:kotlinpoet", version.ref = "kotlin-poet" 
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+pluginPublish = { id = "com.gradle.plugin-publish", version = "1.2.1" }
+mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.25.3" }
 
 [bundles]
 

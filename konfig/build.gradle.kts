@@ -3,6 +3,8 @@ plugins {
     id("java-library")
     `kotlin-dsl`
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.pluginPublish)
+    alias(libs.plugins.mavenPublish)
 }
 
 java {
@@ -19,4 +21,13 @@ dependencies {
     testImplementation(kotlin("test"))
     implementation(libs.kotlin.gradlePlugin)
     implementation(libs.kotlin.poet)
+}
+
+gradlePlugin {
+    plugins {
+        create("buildKonfig") {
+            id = "dev.tilbrook.konfig"
+            implementationClass = "dev.tilbrook.konfig.KonfigPlugin"
+        }
+    }
 }

@@ -2,6 +2,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("dev.tilbrook.konfig") version "0.0.1"
 }
 
 android {
@@ -35,6 +36,11 @@ android {
         jvmTarget = "1.8"
     }
 }
+
+konfig {
+    field("DEBUG", true)
+}
+
 
 dependencies {
 

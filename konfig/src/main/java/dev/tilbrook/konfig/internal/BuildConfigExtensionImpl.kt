@@ -3,22 +3,50 @@ package dev.tilbrook.konfig.internal
 import dev.tilbrook.konfig.BuildConfigExtension
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.ListProperty
-import org.gradle.kotlin.dsl.listProperty
+import org.gradle.api.provider.MapProperty
+import org.gradle.api.provider.Property
+import org.gradle.kotlin.dsl.mapProperty
+import org.gradle.kotlin.dsl.newInstance
+import org.gradle.kotlin.dsl.property
+import java.io.Serializable
 import javax.inject.Inject
 
-data class ConfigEntry(
-  val name: String,
-  val value: Any,
-  val type: String,
-)
+enum class ConfigType {
+  String,
+  Boolean,
+  Char,
+  Byte,
+  Short,
+  Int,
+  Float,
+  Long,
+  Double,
+}
 
-open class BuildConfigExtensionImpl @Inject constructor(
-  objectFactory: ObjectFactory
+data class FieldData(
+  val name: String,
+  val value: String,
+  val type: ConfigType,
+  // TODO Add nullable
+): Serializable
+
+internal open class BuildConfigExtensionImpl @Inject constructor(
+  private val objectFactory: ObjectFactory
 ) : BuildConfigExtension {
 
-  internal val entries: ListProperty<ConfigEntry> =
-    objectFactory.listProperty<ConfigEntry>().convention(mutableListOf())
+  internal val flavour: Property<String> = objectFactory.property<String>().convention("")
+
+  internal val packageName: Property<String> = objectFactory.property<String>().convention("")
+
+  internal val entries: MapProperty<String, List<FieldData>> =
+    objectFactory.mapProperty<String, List<FieldData>>().convention(mutableMapOf())
+
+  fun flavour(name: String, action: BuildConfigExtension.() -> Unit) {
+    val collector: BuildConfigExtensionImpl = objectFactory.newInstance()
+    collector.flavour.set(name)
+    collector.apply(action)
+    entries.putAll(collector.entries)
+  }
 
   override fun field(name: String, value: Any) {
     val typeName = requireNotNull(value.toPrimativeTypeName()) {
@@ -36,10 +64,6 @@ open class BuildConfigExtensionImpl @Inject constructor(
     }
   }
 
-  override fun field(name: String, value: Any, type: String) {
-    entries.add(ConfigEntry(name, value, type))
-  }
-
   override fun systemField(name: String, key: String, default: Any) {
     val value = System.getenv().getOrDefault(key, default)
     field(name, value)
@@ -50,21 +74,25 @@ open class BuildConfigExtensionImpl @Inject constructor(
     field(name, value)
   }
 
-  private fun Any.toPrimativeTypeName(): String? {
+  private fun field(name: String, value: Any, type: ConfigType) {
+    entries.put(flavour.get(), listOf(FieldData(name, value.toString(), type)))
+  }
+
+  private fun Any.toPrimativeTypeName(): ConfigType? {
     return when (this) {
       is String -> {
-        if (startsWith("0x")) "Int"
-        else "String"
+        if (startsWith("0x")) ConfigType.Int
+        else ConfigType.String
       }
 
-      is Boolean -> "Boolean"
-      is Char -> "Char"
-      is Byte -> "Byte"
-      is Short -> "Short"
-      is Int -> "Int"
-      is Float -> "Float"
-      is Long -> "Long"
-      is Double -> "Double"
+      is Boolean -> ConfigType.Boolean
+      is Char -> ConfigType.Char
+      is Byte -> ConfigType.Byte
+      is Short -> ConfigType.Short
+      is Int -> ConfigType.Int
+      is Float -> ConfigType.Float
+      is Long -> ConfigType.Long
+      is Double -> ConfigType.Double
       else -> null
     }
   }
